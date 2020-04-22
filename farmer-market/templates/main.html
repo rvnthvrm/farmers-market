@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Farmers Market</title>
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</div>
+
+<div id="shopping-cart">
+    <div class="txt-heading">Farmers Market</div>
+    {% if 'cart_item' in session %}
+    <a id="btnEmpty" href="{{ url_for('.empty_cart') }}">Empty Cart</a>
+    <table class="tbl-cart" cellpadding="10" cellspacing="1">
+        <tbody>
+        <tr>
+            <th style="text-align:left;">Name</th>
+            <th style="text-align:left;">Code</th>
+            <th style="text-align:right;" width="5%">Quantity</th>
+            <th style="text-align:right;" width="10%">Unit Price</th>
+            <th style="text-align:right;" width="10%">Price</th>
+            <th style="text-align:center;" width="5%">Remove</th>
+        </tr>
+        {% for key in session['cart_item'] %}
+        {% set quantity = key['quantity'] %}
+        {% set price = key['price'] %}
+        {% set item_price = key['total_price'] %}
+        {% set discount = key['discount'] %}
+        <tr>
+            <td><img src="{{ key['image'] }}" class="cart-item-image"/>{{ key['name'] }}</td>
+            <td>{{ key['code'] }}</td>
+            <td style="text-align:right;">{{ quantity }}</td>
+            <td style="text-align:right;">{% if 'discount' not in key%}&#36{% endif %} {{ price }}</td>
+            <td style="text-align:right;">&#36; {{ item_price }}</td>
+            <td style="text-align:center;">
+                {% if 'discount' not in key%}
+                <a href="{{ url_for('.delete_product', code=key['code']) }}" class="btnRemoveAction">
+                    <img src="/static/images/icon-delete.jpg" alt="Remove Item"/>
+                </a>
+                {% endif %}
+            </td>
+
+        </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="2" align="right">Total:</td>
+            <td align="right">{{ session['all_total_quantity'] }}</td>
+            <td align="right" colspan="2"><strong>&#36; {{ session['all_total_price'] }}</strong></td>
+            <td></td>
+        </tr>
+        </tbody>
+    </table>
+    {% else: %}
+    <div class="no-records">Your Cart is Empty</div>
+    {% endif %}
+</div>
+
+<div id="product-grid">
+    <div class="txt-heading">Products</div>
+
+    {% for product in products %}
+
+    <div class="product-item">
+        <form method="post" action="/add">
+            <div class="product-image"><img src="{{ product.img }}"></div>
+            <div class="product-tile-footer">
+                <div class="product-title">{{ product.Name }}</div>
+                <div class="product-price">&#36; {{ product.Price }}</div>
+                <div class="cart-action">
+                    <input type="hidden" name="code" value="{{ product.Item }}"/>
+                    <input type="text" class="product-quantity" name="quantity" value="1" size="2"/>
+                    <input type="submit" value="Add to Cart" class="btnAddAction"/>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% endfor %}
+
+</div>
+</body>
+</html>
