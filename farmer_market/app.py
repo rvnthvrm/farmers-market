@@ -74,8 +74,6 @@ def add_product_to_cart():
         else:
             session['cart_item'].append(product_details[0])
 
-        # all_total_quantity = session['all_total_quantity'] + _quantity
-
     run_discount_rules(session['cart_item'])
     calculate_total()
 
