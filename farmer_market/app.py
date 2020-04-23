@@ -82,6 +82,12 @@ def add_product_to_cart():
 
     run_discount_rules(session['cart_item'])
 
+    session['all_total_price'] = round(
+        sum(
+            [i['total_price'] for i in session['cart_item']]
+        ), 2
+    )
+
     return redirect(url_for('.products'))
 
 
@@ -90,7 +96,6 @@ def run_discount_rules(cart_items):
 
     def update_discount(code, discount_price):
         item = git_item_from_session_if_exist(code)
-
         if not item:
             session['cart_item'].append(
                 {
@@ -105,19 +110,13 @@ def run_discount_rules(cart_items):
             if discount_price != item['total_price']:
                 item['total_price'] = -discount_price
 
-        session['all_total_price'] = round(
-            sum(
-                [i['total_price'] for i in session['cart_item']]
-            ), 2
-        )
-
     for item in cart_items:
         if item['code'] == 'CF1' and item['quantity'] // 2 >= 1:
             discount_price = item['quantity'] // 2 * get_item_from_products(item['code'])['Price']
             update_discount('BOGO', discount_price)
 
         if item['code'] == 'AP1' and item['quantity'] // 3 >= 1:
-            discount_price = item['quantity'] // 3 * get_item_from_products(item['code'])['Price']
+            discount_price = item['quantity'] // 3 * 4.5
             update_discount('APPL', discount_price)
 
         apples = git_item_from_session_if_exist('AP1')
