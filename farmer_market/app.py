@@ -13,16 +13,16 @@ app.secret_key = "secret key"
 
 
 PRODUCTS = [
-        {'Item': 'CH1', 'Name': 'Chai', 'Price': 3.11, 'img': '/static/images/chai1.jpg'},
-        {'Item': 'AP1', 'Name': 'Apples', 'Price': 6.00, 'img': '/static/images/apples1.jpg'},
+        {'Item': 'CH1', 'Name': 'Chai', 'Price': 3.11, 'img': '/static/images/chai.jpg'},
+        {'Item': 'AP1', 'Name': 'Apples', 'Price': 6.00, 'img': '/static/images/apples.jpg'},
         {'Item': 'CF1', 'Name': 'Coffee', 'Price': 11.23, 'img': '/static/images/coffee.jpg'},
-        {'Item': 'MK1', 'Name': 'Milk', 'Price': 4.75, 'img': '/static/images/milk1.jpg'},
-        {'Item': 'OM1', 'Name': 'Oatmeals', 'Price': 3.69, 'img': '/static/images/oatmeals1.jpg'}
+        {'Item': 'MK1', 'Name': 'Milk', 'Price': 4.75, 'img': '/static/images/milk.jpg'},
+        {'Item': 'OM1', 'Name': 'Oatmeals', 'Price': 3.69, 'img': '/static/images/oatmeals.jpg'}
     ]
 
 DISCOUNT_CONFIG = {
     'CH1': ['CHMK'],
-    'AP1': ['APPL'],
+    'AP1': ['APPL', 'APOM'],
     'CF1': ['BOGO'],
     'MK1': [],
     'OM1': ['APOM']
@@ -60,10 +60,8 @@ def add_product_to_cart():
 
     if not session.get('cart_item'):
         all_total_price = 0
-        all_total_quantity = 0
 
         session['cart_item'] = product_details
-        all_total_quantity += _quantity
         all_total_price += _quantity * get_item_from_products(_code)['Price']
     else:
         key = git_item_from_session_if_exist(_code)
@@ -76,11 +74,18 @@ def add_product_to_cart():
         else:
             session['cart_item'].append(product_details[0])
 
-        all_total_quantity = session['all_total_quantity'] + _quantity
-
-    session['all_total_quantity'] = all_total_quantity
+        # all_total_quantity = session['all_total_quantity'] + _quantity
 
     run_discount_rules(session['cart_item'])
+    calculate_total()
+
+    return redirect(url_for('.products'))
+
+
+def calculate_total():
+    session['all_total_quantity'] = sum([
+        i['quantity'] for i in session['cart_item'] if not i.get('discount', False)
+    ])
 
     session['all_total_price'] = round(
         sum(
@@ -88,10 +93,8 @@ def add_product_to_cart():
         ), 2
     )
 
-    return redirect(url_for('.products'))
 
-
-def run_discount_rules(cart_items):
+def run_discount_rules(cart_items, strict=False):
     discount_result = []
 
     def update_discount(code, discount_price):
@@ -129,6 +132,9 @@ def run_discount_rules(cart_items):
             discount_price = get_item_from_products('MK1')['Price']
             update_discount('CHMK', discount_price)
 
+    if strict:
+        calculate_total()
+
     return discount_result
 
 
@@ -148,24 +154,9 @@ def empty_cart():
 
 @app.route('/delete/<string:code>')
 def delete_product(code):
-    quantity_of_deleted_items = sum([
-        i['quantity'] for i in session['cart_item'] if all(
-            [i['code'] == code, i['code'] in DISCOUNT_CONFIG[code]]
-        )
-    ])
-    price_of_deleted_items = sum([
-        i['price'] for i in session['cart_item'] if all(
-            [i['code'] == code, i['code'] in DISCOUNT_CONFIG[code]]
-        )
-    ])
-
-    session['all_total_quantity'] = session['all_total_quantity'] - quantity_of_deleted_items
-    session['all_total_price'] = session['all_total_price'] - (price_of_deleted_items * quantity_of_deleted_items)
-
     session['cart_item'] = [
-        i for i in session['cart_item'] if all(
-            [i['code'] != code, i['code'] not in DISCOUNT_CONFIG[code]]
-        )
+            i for i in session['cart_item'] if i['code'] not in [code] + DISCOUNT_CONFIG.get(code, [])
     ]
-    run_discount_rules(session['cart_item'])
+
+    run_discount_rules(session['cart_item'], strict=True)
     return redirect(url_for('.products'))

@@ -98,3 +98,30 @@ class AppTests(unittest.TestCase):
                     session['all_total_quantity'],
                     2
                 )
+
+    def test_cart_delete(self):
+        with self.app as client:
+            self.app.post('/add', data={'code': 'AP1', 'quantity': 1})
+            self.app.post('/add', data={'code': 'AP1', 'quantity': 1})
+            self.app.post('/add', data={'code': 'AP1', 'quantity': 1})
+            self.app.post('/add', data={'code': 'OM1', 'quantity': 1})
+            self.app.get('/delete/AP1')
+            with client.session_transaction() as session:
+                self.assertEqual(
+                    session['all_total_price'],
+                    3.69
+                )
+                self.assertEqual(
+                    session['all_total_quantity'],
+                    1
+                )
+
+    def test_cart_empty(self):
+        with self.app as client:
+            self.app.post('/add', data={'code': 'AP1', 'quantity': 1})
+            self.app.post('/add', data={'code': 'AP1', 'quantity': 1})
+            self.app.post('/add', data={'code': 'AP1', 'quantity': 1})
+            self.app.post('/add', data={'code': 'OM1', 'quantity': 1})
+            self.app.get('/empty')
+            with client.session_transaction() as session:
+                self.assertDictEqual(session, {})

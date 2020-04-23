@@ -38,6 +38,17 @@ body {
 	margin: 10px 0px;
 }
 
+#btnEmpty2 {
+	background-color: aliceblue;
+	border: black;
+	padding: 5px 10px;
+	color: forestgreen;
+	float: right;
+	text-decoration: none;
+	border-radius: 3px;
+	margin: 10px 0px;
+}
+
 .btnAddAction {
     padding: 5px 10px;
     margin-left: 5px;
