@@ -1,8 +1,15 @@
-FROM alpine:latest
+FROM python:3.6-alpine
 ADD . /code
-WORKDIR /code/farmer_market
-RUN apk update
-RUN apk add py-pip
+WORKDIR /code
+RUN apk update && \
+        apk add --no-cache \
+                pkgconfig \
+                xmlsec \
+                xmlsec-dev \
+                g++ \
+                libffi-dev \
+                openssl-dev
+
 RUN pip install -r requirements.txt
-EXPOSE 5000
-CMD flask run
+EXPOSE 8001
+CMD gunicorn wsgi:app --bind 0.0.0.0:8001 --workers 10 --preload --timeout 180
